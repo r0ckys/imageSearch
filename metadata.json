@@ -1,0 +1,7 @@
+{
+  "name": "ShopVision AI",
+  "description": "Visual Shopping Assistant & Lifestyle Visualizer. Analyze product details and see items in your own space using advanced GenAI.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
