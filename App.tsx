@@ -66,7 +66,7 @@ const App: React.FC = () => {
 
   // Get current base URL without trailing slash or queries to avoid 404s
   const getBaseAppUrl = () => {
-    return window.location.href.split('?')[0].replace(/\/$/, "");
+    return window.location.origin;
   };
 
   useEffect(() => {
@@ -183,7 +183,7 @@ const App: React.FC = () => {
         {!isEmbedded && (
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-4">
-              <Globe className="w-3 h-3" /> Ecommerce Solution
+              <Globe className="w-3 h-3" /> Vercel Ready
             </div>
             <h1 className="text-6xl md:text-7xl font-black text-white tracking-tighter leading-tight">
               See it. Shop it. <span className="text-transparent bg-clip-text accent-gradient">AI Powered.</span>
@@ -373,7 +373,7 @@ const App: React.FC = () => {
                   <h2 className="text-4xl font-black text-white tracking-tight leading-tight">Add Visual Search to Your Shop</h2>
                 </div>
                 
-                <p className="text-slate-400 font-medium leading-relaxed">Copy this snippet to add a camera button to your site's search bar. It correctly handles complex URLs to prevent 404 errors.</p>
+                <p className="text-slate-400 font-medium leading-relaxed">Copy this snippet to add a camera button to your site's search bar. Ensure you have set the <b>API_KEY</b> in your Vercel project settings.</p>
                 
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -398,12 +398,11 @@ const App: React.FC = () => {
   </button>
 </div>
 
-<!-- 2. ADD THIS SCRIPT (FIXES 404 ERRORS) -->
+<!-- 2. ADD THIS SCRIPT (VERCEL READY) -->
 <script>
   function openShopVision() {
-    // Robust URL generation to prevent 404 errors
     const baseUrl = "${getBaseAppUrl()}";
-    const finalUrl = baseUrl + "?embed=true";
+    const finalUrl = baseUrl + "/?embed=true";
     
     const width = 500;
     const height = 800;
@@ -416,7 +415,7 @@ const App: React.FC = () => {
 </script>`}
                     </div>
                     <button 
-                      onClick={() => copySnippet(`<div class="search-wrap" style="position:relative; max-width:400px; font-family: sans-serif;">\n  <input type="text" placeholder="Search products..." style="width:100%; padding:10px 45px 10px 15px; border-radius:20px; border:1px solid #ddd;">\n  <button onclick="openShopVision()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:5px;">\n    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">\n       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>\n       <circle cx="12" cy="13" r="4"></circle>\n    </svg>\n  </button>\n</div>\n\n<script>\n  function openShopVision() {\n    const baseUrl = "${getBaseAppUrl()}";\n    const finalUrl = baseUrl + "?embed=true";\n    const width = 500;\n    const height = 800;\n    window.open(finalUrl, 'ShopVision', 'width='+width+',height='+height+',scrollbars=no,resizable=no');\n  }\n</script>`)}
+                      onClick={() => copySnippet(`<div class="search-wrap" style="position:relative; max-width:400px; font-family: sans-serif;">\n  <input type="text" placeholder="Search products..." style="width:100%; padding:10px 45px 10px 15px; border-radius:20px; border:1px solid #ddd;">\n  <button onclick="openShopVision()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:5px;">\n    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">\n       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>\n       <circle cx="12" cy="13" r="4"></circle>\n    </svg>\n  </button>\n</div>\n\n<script>\n  function openShopVision() {\n    const baseUrl = "${getBaseAppUrl()}";\n    const finalUrl = baseUrl + "/?embed=true";\n    const width = 500;\n    const height = 800;\n    window.open(finalUrl, 'ShopVision', 'width='+width+',height='+height+',scrollbars=no,resizable=no');\n  }\n</script>`)}
                       className="absolute top-4 right-4 p-3 bg-indigo-500 rounded-xl text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all hover:scale-105"
                     >
                       {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
@@ -427,27 +426,22 @@ const App: React.FC = () => {
 
               <div className="bg-white/5 rounded-[2.5rem] p-12 flex flex-col justify-center space-y-12 border border-white/5">
                 <div className="text-center space-y-2">
-                  <h4 className="text-white font-bold text-lg">Real-Time Preview</h4>
-                  <p className="text-slate-500 text-xs">Verify how it triggers the AI assistant:</p>
+                  <h4 className="text-white font-bold text-lg">Deployment Guide</h4>
+                  <p className="text-slate-500 text-xs">Steps to launch on Vercel:</p>
                 </div>
                 
-                <div className="relative w-full max-w-sm mx-auto">
-                   <div className="h-16 bg-white/5 rounded-2xl flex items-center px-6 border border-white/10">
-                      <Search className="w-5 h-5 text-slate-600 mr-4" />
-                      <div className="flex-1 text-slate-700 text-sm">Preview store...</div>
-                      <button 
-                        className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 hover:bg-indigo-500 hover:text-white transition-all shadow-lg"
-                        onClick={() => startVisualSearch()}
-                      >
-                        <Camera className="w-5 h-5" />
-                      </button>
-                   </div>
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest text-center">Important Note</p>
-                  <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-[11px] text-yellow-200/80 leading-relaxed">
-                    If you still see a 404, check if your hosting platform blocks query parameters like <strong>?embed=true</strong>. Use the "Test Embed Link" above to verify your hosting settings first.
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-black">1</div>
+                    <div className="text-xs text-slate-300">Push code to <b>GitHub</b></div>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-black">2</div>
+                    <div className="text-xs text-slate-300">Add <b>API_KEY</b> to Vercel Env Vars</div>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-black">3</div>
+                    <div className="text-xs text-slate-300">Vercel handles routing with <b>vercel.json</b></div>
                   </div>
                 </div>
               </div>
