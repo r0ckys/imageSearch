@@ -10,24 +10,23 @@ import {
   X, 
   RefreshCcw,
   Image as ImageIcon,
-  Box,
-  Layers,
-  Info,
   ArrowRight,
-  Upload,
   Code,
   Check,
   ChevronLeft,
-  Share2,
   Mic,
   Copy,
   ExternalLink,
   Globe,
-  Palette
+  Palette,
+  Tag,
+  DollarSign,
+  Package,
+  Star
 } from 'lucide-react';
 import { Button } from './components/Button';
 import { analyzeProduct, visualizeProduct } from './services/geminiService';
-import { ImageState, HistoryItem, AppMode, FilterPreset } from './types';
+import { ImageState, HistoryItem, AppMode, FilterPreset, ProductData } from './types';
 
 const DEMO_IMAGES = [
   { id: '1', url: 'https://images.unsplash.com/photo-1540574163026-643ea20ade25?auto=format&fit=crop&q=80&w=400', label: 'Eames Chair' },
@@ -36,10 +35,10 @@ const DEMO_IMAGES = [
 ];
 
 const RETAIL_PRESETS: FilterPreset[] = [
-  { id: 'luxury', label: 'Luxury Room', prompt: 'Visualize this product in a high-end, luxury minimalist penthouse during golden hour.', icon: 'Box' },
-  { id: 'studio', label: 'Studio Shot', prompt: 'Render this product in a professional white studio background with soft cinematic lighting.', icon: 'Maximize2' },
-  { id: 'scandi', label: 'Scandinavian', prompt: 'Show this product in a bright, airy Scandinavian living room with light wood accents.', icon: 'Layers' },
-  { id: 'vintage', label: 'Vintage Style', prompt: 'Apply a vintage film aesthetic to this image. Warm tones, subtle film grain, and a classic retro 1970s photography style.', icon: 'Palette' },
+  { id: 'luxury', label: 'Penthouse', prompt: 'Inside a luxury minimalist penthouse, golden hour lighting.', icon: 'Box' },
+  { id: 'studio', label: 'Studio', prompt: 'Professional white studio background, cinematic soft light.', icon: 'Maximize2' },
+  { id: 'scandi', label: 'Bright Home', prompt: 'Bright Scandinavian living room, light wood, plants.', icon: 'Layers' },
+  { id: 'nature', label: 'Outdoor', prompt: 'Lush garden setting, natural morning sunlight, 85mm lens.', icon: 'Sun' },
 ];
 
 const App: React.FC = () => {
@@ -64,10 +63,7 @@ const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
 
-  // Get current base URL without trailing slash or queries to avoid 404s
-  const getBaseAppUrl = () => {
-    return window.location.origin;
-  };
+  const getBaseAppUrl = () => window.location.origin;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -107,7 +103,7 @@ const App: React.FC = () => {
         setIsCameraActive(true);
       }
     } catch (err) {
-      alert("Please enable camera permissions to use Visual Search.");
+      alert("Enable camera permissions.");
     }
   };
 
@@ -165,12 +161,6 @@ const App: React.FC = () => {
     }
   };
 
-  const copySnippet = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const resetToHome = () => {
     stopCamera();
     setView('home');
@@ -183,13 +173,13 @@ const App: React.FC = () => {
         {!isEmbedded && (
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-4">
-              <Globe className="w-3 h-3" /> Vercel Ready
+              <Sparkles className="w-3 h-3" /> Powered by Gemini AI
             </div>
-            <h1 className="text-6xl md:text-7xl font-black text-white tracking-tighter leading-tight">
-              See it. Shop it. <span className="text-transparent bg-clip-text accent-gradient">AI Powered.</span>
+            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-tight">
+              Analyze. <span className="text-transparent bg-clip-text accent-gradient">Visualize.</span> Shop.
             </h1>
             <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-              Universal visual commerce assistant. Let your customers search your site using their camera.
+              Identify any product instantly and see it in your dream space.
             </p>
           </div>
         )}
@@ -200,7 +190,7 @@ const App: React.FC = () => {
             <Search className="w-7 h-7 text-slate-600" />
             <input 
               type="text" 
-              placeholder="Search or upload a photo..." 
+              placeholder="Paste image URL or search..." 
               className="flex-1 bg-transparent border-none outline-none text-white text-xl placeholder:text-slate-700 font-medium"
             />
             <div className="flex items-center gap-3">
@@ -222,8 +212,8 @@ const App: React.FC = () => {
       {!isEmbedded && (
         <div className="w-full max-w-4xl space-y-6">
           <div className="flex items-center justify-between px-2">
-            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Quick Demos</h4>
-            <span className="text-[10px] text-indigo-400 font-bold">Try one-click AI analysis</span>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Popular Queries</h4>
+            <span className="text-[10px] text-indigo-400 font-bold">Quick test</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {DEMO_IMAGES.map(img => (
@@ -235,7 +225,7 @@ const App: React.FC = () => {
                 <img src={img.url} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                   <span className="text-sm font-bold text-white flex items-center gap-2">
-                    {img.label} <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                    {img.label} <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all" />
                   </span>
                 </div>
               </button>
@@ -246,32 +236,81 @@ const App: React.FC = () => {
     </div>
   );
 
+  const AnalysisResults = ({ data }: { data: ProductData }) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="md:col-span-2 glass-card rounded-2xl p-6 border-white/5">
+        <h2 className="text-2xl font-black text-white mb-2">{data.name}</h2>
+        <p className="text-slate-400 text-sm leading-relaxed">{data.description}</p>
+      </div>
+      
+      <div className="glass-card rounded-2xl p-5 border-white/5 space-y-1">
+        <div className="flex items-center gap-2 text-indigo-400 mb-2">
+          <Tag className="w-4 h-4" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Brand / Tier</span>
+        </div>
+        <p className="text-white font-bold">{data.brandSuggestion}</p>
+      </div>
+
+      <div className="glass-card rounded-2xl p-5 border-white/5 space-y-1">
+        <div className="flex items-center gap-2 text-green-400 mb-2">
+          <DollarSign className="w-4 h-4" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Market Value</span>
+        </div>
+        <p className="text-white font-bold">{data.estimatedPrice}</p>
+      </div>
+
+      <div className="glass-card rounded-2xl p-5 border-white/5 space-y-3">
+        <div className="flex items-center gap-2 text-orange-400">
+          <Package className="w-4 h-4" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Materials</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {data.materials.map((m, i) => (
+            <span key={i} className="px-2 py-1 rounded bg-white/5 border border-white/5 text-[10px] text-slate-300 font-medium">{m}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass-card rounded-2xl p-5 border-white/5 space-y-3">
+        <div className="flex items-center gap-2 text-purple-400">
+          <Star className="w-4 h-4" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Complements</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {data.complementaryItems.map((item, i) => (
+            <span key={i} className="px-2 py-1 rounded bg-indigo-500/10 text-[10px] text-indigo-300 font-bold border border-indigo-500/20">{item}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   const AssistantView = () => (
     <main className={`flex-1 container mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-8 duration-700 ${isEmbedded ? 'pt-0' : ''}`}>
-      <div className="lg:col-span-4 space-y-8">
-        <div className="glass-card rounded-[2rem] p-8 space-y-8 border-white/10">
+      <div className="lg:col-span-4 space-y-6">
+        <div className="glass-card rounded-[2rem] p-8 space-y-8 border-white/10 sticky top-32">
           <button onClick={resetToHome} className="flex items-center text-[10px] font-black text-slate-500 hover:text-white transition-colors uppercase tracking-widest gap-2">
-            <ChevronLeft className="w-4 h-4" /> Exit Workspace
+            <ChevronLeft className="w-4 h-4" /> Exit Assistant
           </button>
           
           <div className="space-y-4">
-            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Workspace Mode</h3>
+            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Tool Selection</h3>
             <div className="flex p-1 bg-white/5 rounded-2xl border border-white/5">
               <button onClick={() => setMode(AppMode.ANALYZE)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${mode === AppMode.ANALYZE ? 'bg-white text-black shadow-xl' : 'text-slate-400 hover:text-white'}`}>
-                <Search className="w-4 h-4" /> Insight
+                <Search className="w-4 h-4" /> Analysis
               </button>
               <button onClick={() => setMode(AppMode.EDIT)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${mode === AppMode.EDIT ? 'bg-white text-black shadow-xl' : 'text-slate-400 hover:text-white'}`}>
-                <Sparkles className="w-4 h-4" /> Visualizer
+                <Sparkles className="w-4 h-4" /> Visualize
               </button>
             </div>
           </div>
 
-          {state.current && (
+          {mode === AppMode.EDIT && state.current && (
             <div className="grid grid-cols-2 gap-2">
               {RETAIL_PRESETS.map(p => (
-                <button key={p.id} onClick={() => handleProcess(p.prompt)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 text-[10px] font-bold text-slate-400 transition-all text-left">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 flex-shrink-0">
-                    <Palette className="w-4 h-4" />
+                <button key={p.id} onClick={() => handleProcess(p.prompt)} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 text-[10px] font-bold text-slate-400 transition-all text-center">
+                  <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-1">
+                    <Palette className="w-5 h-5" />
                   </div>
                   {p.label}
                 </button>
@@ -280,57 +319,94 @@ const App: React.FC = () => {
           )}
 
           <div className="space-y-4">
-            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Instruction</h3>
+            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Custom Prompt</h3>
             <textarea 
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="What would you like to know?"
-              className="w-full h-32 bg-black/60 border border-white/5 rounded-2xl p-5 text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm placeholder:text-slate-700"
+              placeholder={mode === AppMode.ANALYZE ? "Ask specific questions..." : "Describe the environment..."}
+              className="w-full h-24 bg-black/60 border border-white/5 rounded-2xl p-5 text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm placeholder:text-slate-700"
             />
           </div>
 
-          <Button className="w-full py-5 text-xs font-black uppercase tracking-widest accent-gradient border-none" onClick={() => handleProcess()} isLoading={loading} disabled={!state.current}>
-            Run AI
+          <Button className="w-full py-5 text-xs font-black uppercase tracking-widest accent-gradient border-none rounded-2xl" onClick={() => handleProcess()} isLoading={loading} disabled={!state.current}>
+            Execute AI Magic
+          </Button>
+
+          <Button variant="ghost" onClick={() => setShowHistory(!showHistory)} className="w-full py-4 text-[10px] font-black uppercase tracking-widest border border-white/5 text-slate-500">
+            <History className="w-4 h-4 mr-2" /> View Sessions ({state.history.length})
           </Button>
         </div>
       </div>
 
-      <div className="lg:col-span-8">
-        <div className="glass-card rounded-[3rem] overflow-hidden relative min-h-[600px] flex items-center justify-center border-white/5">
+      <div className="lg:col-span-8 space-y-8">
+        <div className="glass-card rounded-[3rem] overflow-hidden relative min-h-[500px] flex items-center justify-center border-white/5 group">
           {state.current ? (
-            <div className="relative w-full h-full flex items-center justify-center p-12">
-              <img src={state.current} className="max-w-full max-h-[70vh] object-contain rounded-3xl shadow-2xl" alt="Preview" />
+            <div className="relative w-full h-full flex items-center justify-center p-8 md:p-12">
+              <img src={state.current} className="max-w-full max-h-[65vh] object-contain rounded-3xl shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]" alt="Active" />
               <div className="absolute bottom-10 right-10 flex gap-3">
-                <Button variant="secondary" className="bg-white/10 border-white/10 backdrop-blur text-white h-12 rounded-2xl" onClick={() => setState(prev => ({ ...prev, current: prev.original, analysis: null }))}>
-                  <RefreshCcw className="w-4 h-4" /> Revert
+                <Button variant="secondary" className="bg-black/40 border-white/10 backdrop-blur-xl text-white h-12 rounded-2xl px-5" onClick={() => setState(prev => ({ ...prev, current: prev.original, analysis: null }))}>
+                  <RefreshCcw className="w-4 h-4 mr-2" /> Reset
                 </Button>
                 <Button className="accent-gradient border-none h-12 rounded-2xl px-6">
-                  Save <Download className="w-4 h-4 ml-2" />
+                  <Download className="w-4 h-4 mr-2" /> Export
                 </Button>
               </div>
             </div>
           ) : isCameraActive ? (
-            <div className="relative w-full aspect-[4/3] bg-black">
+            <div className="relative w-full aspect-[16/9] bg-black overflow-hidden rounded-[3rem]">
               <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-              <div className="absolute inset-0 flex flex-col items-center justify-end p-10 gap-6">
-                <button onClick={capturePhoto} className="w-24 h-24 rounded-full border-[6px] border-white/20 flex items-center justify-center p-2">
-                  <div className="w-full h-full rounded-full bg-white"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 flex flex-col items-center justify-end p-10 gap-8">
+                <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 animate-pulse">
+                   <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                   <span className="text-[10px] font-black text-white uppercase tracking-widest">Camera Live</span>
+                </div>
+                <button onClick={capturePhoto} className="w-24 h-24 rounded-full border-[6px] border-white/20 flex items-center justify-center p-2 group transition-all hover:scale-110 active:scale-95">
+                  <div className="w-full h-full rounded-full bg-white group-hover:bg-indigo-400 transition-colors"></div>
                 </button>
-                <Button variant="danger" className="rounded-full px-8 h-12 uppercase text-[10px] font-black" onClick={stopCamera}>
-                  <X className="w-4 h-4 mr-2" /> Close
+                <Button variant="danger" className="rounded-full px-8 h-12 uppercase text-[10px] font-black bg-white/10 backdrop-blur" onClick={stopCamera}>
+                  <X className="w-4 h-4 mr-2" /> Cancel
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="text-center p-16">
-              <ImageIcon className="text-slate-700 w-16 h-16 mx-auto mb-6" />
+            <div className="text-center p-20">
+              <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-indigo-500/20">
+                <ImageIcon className="text-indigo-400 w-10 h-10" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-6">No media active</h3>
               <div className="flex gap-4 justify-center">
-                <Button className="accent-gradient border-none h-14 px-10 rounded-2xl" onClick={() => fileInputRef.current?.click()}>Upload</Button>
-                <Button variant="ghost" className="h-14 px-8 border border-white/10 rounded-2xl" onClick={startCamera}>Camera</Button>
+                <Button className="accent-gradient border-none h-14 px-10 rounded-2xl" onClick={() => fileInputRef.current?.click()}>Upload Photo</Button>
+                <Button variant="ghost" className="h-14 px-8 border border-white/10 rounded-2xl text-white" onClick={startCamera}>Open Camera</Button>
               </div>
             </div>
           )}
         </div>
+
+        {state.analysis && mode === AppMode.ANALYZE && (
+          <AnalysisResults data={state.analysis} />
+        )}
+
+        {showHistory && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-top-4 duration-500">
+            {state.history.length === 0 && (
+              <div className="col-span-full py-10 text-center glass-card rounded-3xl border-dashed border-white/5 text-slate-600 text-xs font-bold uppercase tracking-widest">
+                Session history is empty
+              </div>
+            )}
+            {state.history.map(item => (
+              <button 
+                key={item.id} 
+                onClick={() => setState(prev => ({ ...prev, current: item.url }))}
+                className="group relative aspect-square rounded-3xl overflow-hidden border border-white/5 hover:border-indigo-500/50 transition-all"
+              >
+                <img src={item.url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <RefreshCcw className="text-white w-6 h-6" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
@@ -338,16 +414,16 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-500 selection:bg-indigo-500/30 ${isEmbedded ? 'bg-transparent' : 'bg-[#080808]'}`}>
       {!isEmbedded && (
-        <nav className="border-b border-white/5 px-8 py-6 flex items-center justify-between sticky top-0 z-50 glass-card">
+        <nav className="border-b border-white/5 px-8 py-6 flex items-center justify-between sticky top-0 z-[100] glass-card">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={resetToHome}>
-            <div className="w-10 h-10 accent-gradient rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 accent-gradient rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <ShoppingBag className="text-white w-5 h-5" />
             </div>
-            <h1 className="text-lg font-black tracking-tight text-white leading-none">ShopVision</h1>
+            <h1 className="text-lg font-black tracking-tight text-white leading-none">ShopVision <span className="text-indigo-500 text-[10px] ml-1 uppercase">AI</span></h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" className="text-[10px] font-black uppercase border border-white/10" onClick={() => setShowIntegrate(true)}>
-              <Code className="w-4 h-4 mr-2 text-indigo-400" /> Integrate
+            <Button variant="ghost" className="text-[10px] font-black uppercase border border-white/10 px-6 h-11" onClick={() => setShowIntegrate(true)}>
+              <Code className="w-4 h-4 mr-2 text-indigo-400" /> API Integration
             </Button>
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
           </div>
@@ -358,65 +434,54 @@ const App: React.FC = () => {
 
       {/* INTEGRATION MODAL */}
       {showIntegrate && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setShowIntegrate(false)} />
-          <div className="relative w-full max-w-5xl glass-card rounded-[3rem] p-12 border-white/10 animate-in zoom-in duration-300 overflow-y-auto max-h-[90vh]">
+          <div className="relative w-full max-w-5xl glass-card rounded-[3.5rem] p-12 border-white/10 animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
             <button onClick={() => setShowIntegrate(false)} className="absolute top-8 right-8 p-3 hover:bg-white/10 rounded-full text-white">
               <X className="w-6 h-6" />
             </button>
             <div className="grid md:grid-cols-2 gap-16">
               <div className="space-y-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 accent-gradient rounded-2xl flex items-center justify-center shadow-xl">
-                    <Code className="text-white w-7 h-7" />
+                  <div className="w-16 h-16 accent-gradient rounded-[1.5rem] flex items-center justify-center shadow-2xl">
+                    <Code className="text-white w-8 h-8" />
                   </div>
-                  <h2 className="text-4xl font-black text-white tracking-tight leading-tight">Add Visual Search to Your Shop</h2>
+                  <h2 className="text-4xl font-black text-white tracking-tight leading-tight">Universal Visual Commerce</h2>
                 </div>
                 
-                <p className="text-slate-400 font-medium leading-relaxed">Copy this snippet to add a camera button to your site's search bar. Ensure you have set the <b>API_KEY</b> in your Vercel project settings.</p>
+                <p className="text-slate-400 font-medium leading-relaxed text-lg">Bring the power of Gemini Vision to your own storefront. One script, endless retail possibilities.</p>
                 
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black uppercase text-indigo-400 tracking-widest">Ecommerce Code Snippet</h4>
-                    <button 
-                      onClick={() => window.open(getBaseAppUrl() + "?embed=true", '_blank')}
-                      className="text-[10px] font-black uppercase text-white bg-white/10 px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-white/20 transition-colors"
-                    >
-                      <ExternalLink className="w-3 h-3" /> Test Embed Link
-                    </button>
+                    <h4 className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Embed Snippet (Copy & Paste)</h4>
                   </div>
                   <div className="relative group">
-                    <div className="bg-black/60 rounded-2xl p-6 font-mono text-[11px] text-indigo-300 border border-white/5 h-64 overflow-auto leading-relaxed whitespace-pre">
-{`<!-- 1. ADD THE BUTTON TO YOUR SEARCH BAR -->
-<div class="search-wrap" style="position:relative; max-width:400px; font-family: sans-serif;">
-  <input type="text" placeholder="Search products..." style="width:100%; padding:10px 45px 10px 15px; border-radius:20px; border:1px solid #ddd;">
-  <button onclick="openShopVision()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:5px;">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
-       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-       <circle cx="12" cy="13" r="4"></circle>
-    </svg>
+                    <div className="bg-black/60 rounded-[2rem] p-8 font-mono text-[11px] text-indigo-300 border border-white/5 h-80 overflow-auto leading-relaxed whitespace-pre thin-scrollbar">
+{`<!-- 1. BUTTON ELEMENT -->
+<div class="search-with-ai" style="position:relative; width:100%;">
+  <input type="text" placeholder="Search with AI..." style="width:100%; border:1px solid #eee; border-radius:30px; padding:15px 50px 15px 20px;">
+  <button onclick="openShopVision()" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
   </button>
 </div>
 
-<!-- 2. ADD THIS SCRIPT (VERCEL READY) -->
+<!-- 2. POPUP HANDLER -->
 <script>
   function openShopVision() {
-    const baseUrl = "${getBaseAppUrl()}";
-    const finalUrl = baseUrl + "/?embed=true";
-    
-    const width = 500;
-    const height = 800;
-    const left = (window.innerWidth - width) / 2;
-    const top = (window.innerHeight - height) / 2;
-    
-    window.open(finalUrl, 'ShopVision', 
-      'width='+width+',height='+height+',top='+top+',left='+left+',scrollbars=no,resizable=no');
+    const url = "${getBaseAppUrl()}/?embed=true";
+    const w = 480, h = 800;
+    const l = (screen.width - w) / 2, t = (screen.height - h) / 2;
+    window.open(url, 'ShopVision', 'width='+w+',height='+h+',top='+t+',left='+l);
   }
 </script>`}
                     </div>
                     <button 
-                      onClick={() => copySnippet(`<div class="search-wrap" style="position:relative; max-width:400px; font-family: sans-serif;">\n  <input type="text" placeholder="Search products..." style="width:100%; padding:10px 45px 10px 15px; border-radius:20px; border:1px solid #ddd;">\n  <button onclick="openShopVision()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:5px;">\n    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">\n       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>\n       <circle cx="12" cy="13" r="4"></circle>\n    </svg>\n  </button>\n</div>\n\n<script>\n  function openShopVision() {\n    const baseUrl = "${getBaseAppUrl()}";\n    const finalUrl = baseUrl + "/?embed=true";\n    const width = 500;\n    const height = 800;\n    window.open(finalUrl, 'ShopVision', 'width='+width+',height='+height+',scrollbars=no,resizable=no');\n  }\n</script>`)}
-                      className="absolute top-4 right-4 p-3 bg-indigo-500 rounded-xl text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all hover:scale-105"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`<script>\n  function openShopVision() {\n    const url = "${getBaseAppUrl()}/?embed=true";\n    window.open(url, 'ShopVision', 'width=480,height=800');\n  }\n</script>`);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="absolute top-6 right-6 p-4 bg-indigo-500 rounded-2xl text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all active:scale-90"
                     >
                       {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                     </button>
@@ -424,25 +489,23 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white/5 rounded-[2.5rem] p-12 flex flex-col justify-center space-y-12 border border-white/5">
-                <div className="text-center space-y-2">
-                  <h4 className="text-white font-bold text-lg">Deployment Guide</h4>
-                  <p className="text-slate-500 text-xs">Steps to launch on Vercel:</p>
+              <div className="bg-white/5 rounded-[3rem] p-12 flex flex-col justify-center space-y-12 border border-white/5">
+                <div className="text-center space-y-4">
+                  <h4 className="text-white font-black text-2xl">Production Ready</h4>
+                  <p className="text-slate-500 text-sm">Follow these steps for a perfect launch:</p>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-black">1</div>
-                    <div className="text-xs text-slate-300">Push code to <b>GitHub</b></div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-black">2</div>
-                    <div className="text-xs text-slate-300">Add <b>API_KEY</b> to Vercel Env Vars</div>
-                  </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-black">3</div>
-                    <div className="text-xs text-slate-300">Vercel handles routing with <b>vercel.json</b></div>
-                  </div>
+                <div className="space-y-4">
+                   {[
+                     { step: 1, text: "Push code to Vercel/GitHub" },
+                     { step: 2, text: "Add API_KEY to Environment Variables" },
+                     { step: 3, text: "Paste the snippet in your site footer" }
+                   ].map(item => (
+                     <div key={item.step} className="p-6 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-5 group hover:bg-white/10 transition-all cursor-default">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center text-sm font-black text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">{item.step}</div>
+                        <div className="text-sm text-slate-300 font-bold">{item.text}</div>
+                     </div>
+                   ))}
                 </div>
               </div>
             </div>
@@ -451,9 +514,15 @@ const App: React.FC = () => {
       )}
 
       {loading && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl">
-          <div className="w-24 h-24 border-[4px] border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-          <p className="mt-8 text-xl font-black text-white">Gemini is processing...</p>
+        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-black/80 backdrop-blur-3xl">
+          <div className="relative">
+             <div className="w-32 h-32 border-[2px] border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin" />
+             <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="w-8 h-8 text-indigo-500 animate-pulse" />
+             </div>
+          </div>
+          <p className="mt-10 text-2xl font-black text-white tracking-tight">Gemini is processing...</p>
+          <p className="mt-2 text-slate-500 text-sm font-bold uppercase tracking-widest">Optimizing pixels & data</p>
         </div>
       )}
     </div>

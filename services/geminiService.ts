@@ -1,15 +1,15 @@
 
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
+import { ProductData } from "../types";
 
-// Use process.env.API_KEY directly as per guidelines.
 const getAIClient = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 /**
- * Analyzes a product image for ecommerce details.
+ * Analyzes a product image using structured JSON output.
  */
-export const analyzeProduct = async (base64Image: string, prompt: string): Promise<string> => {
+export const analyzeProduct = async (base64Image: string, prompt: string): Promise<ProductData> => {
   const ai = getAIClient();
   const imagePart = {
     inlineData: {
@@ -19,15 +19,43 @@ export const analyzeProduct = async (base64Image: string, prompt: string): Promi
   };
   
   const textPart = {
-    text: prompt || "Analyze this product. Provide details on: 1. Primary Material/Fabric, 2. Style (e.g. Minimalist, Industrial, Luxury), 3. Recommended use cases, 4. Three items that would complement this visually."
+    text: prompt || "Identify this product and provide deep retail insights. Focus on quality, style, and market positioning."
   };
 
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: { parts: [imagePart, textPart] },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          name: { type: Type.STRING, description: "Name of the product" },
+          brandSuggestion: { type: Type.STRING, description: "Likely brand or luxury tier" },
+          estimatedPrice: { type: Type.STRING, description: "Market price estimate with currency" },
+          materials: { 
+            type: Type.ARRAY, 
+            items: { type: Type.STRING },
+            description: "List of materials used" 
+          },
+          style: { type: Type.STRING, description: "Aesthetic style classification" },
+          description: { type: Type.STRING, description: "One paragraph marketing description" },
+          complementaryItems: { 
+            type: Type.ARRAY, 
+            items: { type: Type.STRING },
+            description: "3 items that look good with this" 
+          }
+        },
+        required: ["name", "brandSuggestion", "estimatedPrice", "materials", "style", "description", "complementaryItems"]
+      }
+    }
   });
 
-  return response.text || "No product insights available.";
+  try {
+    return JSON.parse(response.text || "{}");
+  } catch (e) {
+    throw new Error("Failed to parse product data.");
+  }
 };
 
 /**
@@ -43,21 +71,20 @@ export const visualizeProduct = async (base64Image: string, prompt: string): Pro
     },
   };
 
-  // Enhance the prompt for better ecommerce visualization
-  const enhancedPrompt = `High quality product visualization: ${prompt}. Maintain the core product's identity while changing the environment or style realistically. 4k resolution, professional photography style.`;
-
-  const textPart = {
-    text: enhancedPrompt
-  };
+  const enhancedPrompt = `High-end commercial lifestyle photography: ${prompt}. Place the product in a realistic, perfectly lit environment. Maintain the product's exact proportions and design details. High dynamic range, soft shadows, 8k resolution.`;
 
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
-    contents: { parts: [imagePart, textPart] },
+    contents: { parts: [imagePart, { text: enhancedPrompt }] },
+    config: {
+      imageConfig: {
+        aspectRatio: "1:1"
+      }
+    }
   });
 
   let generatedImageUrl = "";
   if (response.candidates?.[0]?.content?.parts) {
-    // Correctly iterate through all parts to find the image part as per guidelines.
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
         generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
@@ -67,7 +94,7 @@ export const visualizeProduct = async (base64Image: string, prompt: string): Pro
   }
 
   if (!generatedImageUrl) {
-    throw new Error("Unable to render the visualization. Try a different request.");
+    throw new Error("Unable to render the visualization.");
   }
 
   return generatedImageUrl;

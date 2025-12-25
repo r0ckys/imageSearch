@@ -1,8 +1,18 @@
 
+export interface ProductData {
+  name: string;
+  brandSuggestion: string;
+  estimatedPrice: string;
+  materials: string[];
+  style: string;
+  description: string;
+  complementaryItems: string[];
+}
+
 export interface ImageState {
   original: string | null;
   current: string | null;
-  analysis: string | null;
+  analysis: ProductData | null;
   history: HistoryItem[];
 }
 
